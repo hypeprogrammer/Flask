@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from models import User
 from werkzeub.security import generate_password_hash
+from werkzeub.security import check_password_hash
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = ''
@@ -32,4 +33,15 @@ def sighup():
 		flash('계정생성완료')
 		return redirect(url_for('login'))
 	return render_template('signup.html', title='Sign Up', form=form)
-	
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+	form = LoginForm()
+	if form.validate_on_submit():
+		user = User.query.filter_by(username=form.username.data).first()
+		if user and check_password_hash(user.password, form.password.data):
+			login_user(user)
+			return redirect(url_for('home'))
+		else:
+			flash('로그인 실패')
+	return render_template('login.html', title='Login', form = form)
